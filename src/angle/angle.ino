@@ -1,23 +1,24 @@
 const int    SENSORS[5]       = {A1, A2, A3, A4, A5};
-const int    LIMITS[5]        = {920, 920, 970, 920, 920};
-const double SENSOR_ANGLES[4] = {5.357943, 6.795100, 6.795100, 6.675638};
+const int    LIMITS[5]        = {880, 880, 880, 880, 880};
+//const double SENSOR_ANGLES[4] = {5.357943, 6.795100, 6.795100, 6.675638};
+const double SENSOR_ANGLES[4] = {14.96989, 20.85526, 20.85526, 18.96187};
+
 const int    MOTORS[2]        = {5, 6};
-const int    CENTERS[3]       = {4, 14, 31};
+const int    WIGHTS[2]        = {5, 40};
 const int    POT              = A0;
 const int    WINDOW           = 4;
-const int    HISTORY_SIZE = 1000;
-
+const int    MAX_SPEED        = 190;
 /* 
  * Definição do parâmetro de velocidade ( Mínimo 0 - 255 Máximo ) 
  * Limite para 200 considerando a segurança
  */
 int currentSpeed[2] = {0, 0};
-int history[HISTORY_SIZE];
-int historyIndex = 0;
+int lastValidValue = 0;
 /*
  * Velocidade mxima
  */
 int maxSpeed = 190;
+int lostCount = 0;
 
 /* 
  * ======================================================================================
@@ -32,15 +33,17 @@ void setup() {
 
    Serial.begin(9600);
 
+   Serial.println(F("Setting up..."));
+
    setMaxSpeedFromManualSensor();
   
    /*
-    * Ler pelo menos quinhetas vezes seguidas algum valor
+    * Ler pelo menos quinhentas vezes seguidas algum valor
     * nos sensores centrais (sensores 2,3,4).
     */
    int count = 0;
 
-   while (count < 500) {
+   while (count < 100) {
      
       int currentValue = getCurrentRead();
      
@@ -50,7 +53,7 @@ void setup() {
          count = 0;
    }
 
-   Serial.print("Ready... Go!");
+   Serial.println(F("Ready... Go!"));
   
    defineSpeed(maxSpeed, maxSpeed);
 }  
@@ -59,12 +62,8 @@ void setup() {
  * ======================================================================================
  */
 void loop() {   
-   
-   int currentValue = getCurrentRead();
 
-   adjust(currentValue);
-   
-   updateHistory(currentValue);
+   adjust(getCurrentRead());
 }
  
 /**
@@ -93,75 +92,59 @@ void defineSpeed(int velocityA, int velocityB) {
 /**
  * ====================================================================================== 
  */
-void updateHistory(int currentValue) {
-   history[historyIndex] = currentValue;
-   historyIndex = (historyIndex + 1) % HISTORY_SIZE;
-}
-
-/**
- * ====================================================================================== 
- * @return 1 for cross, 2 for left curve, 
- */
-int estimateDirection(int currentValue) {
-     
-     int i = historyIndex;
-     
-     int direction = 0;
-     
-     for (int count = 0; count < WINDOW; count++) {
-        direction |= history[i];
-        i = (i + 1) % HISTORY_SIZE;
-     }
-}
-
-/**
- * ====================================================================================== 
- */
-void adjust(int currentValue) {
-   
-   /*
-    * Setando velocidade maxima apos uma sequencia de medidas centralizadas
-    */
-   bool aligned = true;
-   
-   for (int i = 0; i < WINDOW && aligned; i++) {
-       
-      bool centrilized = false;
-       
-      for (int j = 0; j < 3 && !centrilized; j++) 
-         centrilized |= history[(i + historyIndex) % HISTORY_SIZE] == CENTERS[j];
-           
-      aligned &= centrilized;
-   }
+void adjust(int currentValue) {  
   
-   if (aligned && currentValue == 4) {
-      defineSpeed(maxSpeed, maxSpeed); 
-   }
+   if (currentValue > 0) {
+      
+      if (currentValue == 4 || currentValue == 31 || currentValue == 14)
+         defineSpeed(maxSpeed, maxSpeed);
+     
+      else if (currentValue == 7)
+         turnLeft(currentValue);
+         
+      /*
+       * Definindo mesma velocidade quando centralizado
+       */ 
+      else if (currentValue == 28)
+         turnRight(currentValue);
+          
+      /*
+       * Desvio a esquerda
+       */
+      else if (currentValue < 8)
+         turnLeft(currentValue);
+            
+      /*
+       * Desvio a esquerda
+       */
+      else if (currentValue < 29)
+         turnRight(currentValue);
+         
+         
+      lostCount = 0;  
+      
+      if (currentValue != 4)
+          lastValidValue = currentValue;
+   } 
    
    /*
-    * Detando mesma velocidade quando centralizado
-    */ 
-   else if (currentValue == 4) {
-      higherSpeed = max(currentSpeed[0], currentSpeed[1]);
-      defineSpeed(higherSpeed, higherSpeed);
-   }
-   
-   /*
-    *
+    * Se o carro se perder
     */
-    
-}
+   else {
 
-/**
- * ====================================================================================== 
- */
-bool isLine(int currentValue) {
+      if (lostCount > 4) {
 
-   bool result = currentValue == 4;
+         lostCount = 0;
+        
+         if (lastValidValue > 0 && lastValidValue < 8 && lastValidValue != 4)
+            turnLeft(lastValidValue);         
 
-   //for (int i = historyIndex; 
-
-   return result;
+         else if (lastValidValue > 4 && lastValidValue < 29)
+            turnRight(lastValidValue);                  
+       }
+       else
+         lostCount++;
+    }
 }
 
 /**
@@ -175,21 +158,63 @@ void setMaxSpeedFromManualSensor() {
 /**
  * ====================================================================================== 
  */
-void turnLeft(int angle) {
+void turnLeft(int currentValue) {
 
-}
-
-/**
- * ====================================================================================== 
- */
-void turnRight(int angle) {
+  if (currentValue == 0) return; 
   
+   int leftPwm = 0;
+  
+   if (currentValue == 1)
+      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[0] + SENSOR_ANGLES[1])) / WIGHTS[1];
+   
+   else if (currentValue == 2) 
+      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[1])) / WIGHTS[0];
+    
+   else if (currentValue == 3)
+      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[0] / 4 + SENSOR_ANGLES[1])) / WIGHTS[1];
+
+   else if (currentValue == 7)
+      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - 180) / WIGHTS[1];
+   
+   else {
+      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[1] / 4)) / WIGHTS[0];       
+   }
+
+   defineSpeed(leftPwm, maxSpeed);
 }
 
 /**
  * ====================================================================================== 
  */
-double pwdFromDegree(double degree) {
+void turnRight(int currentValue) {
+  
+  if (currentValue == 0) return;
+  
+  int rightPwm = 0;
+  
+   if (currentValue == 16)
+      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[3] + SENSOR_ANGLES[2])) / WIGHTS[1];
+   
+   else if (currentValue == 8) 
+      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[2])) / WIGHTS[0];
+    
+   else if (currentValue == 24)
+      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[3] / 4 + SENSOR_ANGLES[2])) / WIGHTS[1];
+   
+   else if (currentValue == 28)
+      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - 180) / WIGHTS[1];
+      
+   else {
+      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[2] / 4)) / WIGHTS[0];       
+   }
+
+   defineSpeed(maxSpeed, rightPwm);
+}
+
+/**
+ * ====================================================================================== 
+ */
+double pwmFromDegree(double degree) {
    return 27.6527 + 0.5251 * degree;
 }
 
