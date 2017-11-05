@@ -1,79 +1,62 @@
-/* Autores: Os Faixa Preta
-   Objetivo: realizar o controle de um robô segue faixa através da análise dos desvios
-  
-   -Definição dos desvios para controle-
-   ( Posicionamento dos sensores e captação (digital) )
-   0 0 0 0 1 ==> erro = 4
-   0 0 0 1 1 ==> erro = 3
-   0 0 0 1 0 ==> erro = 2
-   0 0 1 1 0 ==> erro = 1
-   0 0 1 0 0 ==> erro = 0
-   0 1 1 0 0 ==> erro = -1
-   0 1 0 0 0 ==> erro = -2
-   1 1 0 0 0 ==> erro = -3
-   1 0 0 0 0 ==> erro = -4
-*/
-
-#define HISTORY_SIZE 20
-
-const int SENSORS[5] = {A1, A2, A3, A4, A5};
-const int LIMITS[5]  = {920, 920, 970, 920, 920};
-const int MOTORS[2]  = {5, 6};
-const int POT = A0;
-const int WINDOW = 4;
+const int    SENSORS[5]       = {A1, A2, A3, A4, A5};
+const int    LIMITS[5]        = {920, 920, 970, 920, 920};
+const double SENSOR_ANGLES[4] = {5.357943, 6.795100, 6.795100, 6.675638};
+const int    MOTORS[2]        = {5, 6};
+const int    CENTERS[3]       = {4, 14, 31};
+const int    POT              = A0;
+const int    WINDOW           = 4;
+const int    HISTORY_SIZE = 1000;
 
 /* 
  * Definição do parâmetro de velocidade ( Mínimo 0 - 255 Máximo ) 
  * Limite para 200 considerando a segurança
  */
+int currentSpeed[2] = {0, 0};
 int history[HISTORY_SIZE];
 int historyIndex = 0;
-
-int currentSpeedA = 0;
-int currentSpeedB = 0;
-
+/*
+ * Velocidade mxima
+ */
 int maxSpeed = 190;
 
-// ======================================================================================
+/* 
+ * ======================================================================================
+ */
 void setup() {  
   
-  for (int i = 0; i < 5; i++)
-     pinMode(SENSORS[i], INPUT);
+   for (int i = 0; i < 5; i++)
+      pinMode(SENSORS[i], INPUT);
 
-  for (int i = 0; i < 2; i++)
-     pinMode(MOTORS[i], OUTPUT);
+   for (int i = 0; i < 2; i++)
+      pinMode(MOTORS[i], OUTPUT);
 
-  Serial.begin(9600);
+   Serial.begin(9600);
 
-  setMaxSpeedFromManualSensor();
-
-  //defineSpeed(60, 60);
+   setMaxSpeedFromManualSensor();
   
-  /*
-   * Ler pelo menos três vezes seguidas algum valor
-   * nos sensores centrais (sensores 2,3,4).
-   */
-  int x = 0;
+   /*
+    * Ler pelo menos quinhetas vezes seguidas algum valor
+    * nos sensores centrais (sensores 2,3,4).
+    */
+   int count = 0;
 
-  while (x < 500) {
+   while (count < 500) {
      
-     int currentValue = getCurrentRead();
+      int currentValue = getCurrentRead();
      
-     if (currentValue > 1 && currentValue < 16)
-        x++;
-     else
-        x = 0;
-  }
+      if (currentValue > 1 && currentValue < 16)
+         count++;
+      else
+         count = 0;
+   }
 
-  Serial.print("Ready... Go!");
+   Serial.print("Ready... Go!");
   
-  defineSpeed(maxSpeed, maxSpeed);
+   defineSpeed(maxSpeed, maxSpeed);
 }  
 
-// ======================================================================================
-
 /*
- * 
+ * ======================================================================================
  */
 void loop() {   
    
@@ -84,10 +67,8 @@ void loop() {
    updateHistory(currentValue);
 }
  
-// ======================================================================================
- 
 /**
- * 
+ * ====================================================================================== 
  */
 int getCurrentRead() {
    
@@ -100,17 +81,17 @@ int getCurrentRead() {
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 void defineSpeed(int velocityA, int velocityB) {
-  analogWrite(MOTORS[0], velocityA);
-  analogWrite(MOTORS[1], velocityB);
-  currentSpeedA = velocityA;
-  currentSpeedB = velocityB;
+   analogWrite(MOTORS[0], velocityA);
+   analogWrite(MOTORS[1], velocityB);
+   currentSpeed[0] = velocityA;
+   currentSpeed[1] = velocityB;
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 void updateHistory(int currentValue) {
    history[historyIndex] = currentValue;
@@ -118,6 +99,7 @@ void updateHistory(int currentValue) {
 }
 
 /**
+ * ====================================================================================== 
  * @return 1 for cross, 2 for left curve, 
  */
 int estimateDirection(int currentValue) {
@@ -133,19 +115,45 @@ int estimateDirection(int currentValue) {
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 void adjust(int currentValue) {
-
-   //currentValue
    
-   if (currentValue < 2 && history[0] == 0) {
-    
+   /*
+    * Setando velocidade maxima apos uma sequencia de medidas centralizadas
+    */
+   bool aligned = true;
+   
+   for (int i = 0; i < WINDOW && aligned; i++) {
+       
+      bool centrilized = false;
+       
+      for (int j = 0; j < 3 && !centrilized; j++) 
+         centrilized |= history[(i + historyIndex) % HISTORY_SIZE] == CENTERS[j];
+           
+      aligned &= centrilized;
    }
+  
+   if (aligned && currentValue == 4) {
+      defineSpeed(maxSpeed, maxSpeed); 
+   }
+   
+   /*
+    * Detando mesma velocidade quando centralizado
+    */ 
+   else if (currentValue == 4) {
+      higherSpeed = max(currentSpeed[0], currentSpeed[1]);
+      defineSpeed(higherSpeed, higherSpeed);
+   }
+   
+   /*
+    *
+    */
+    
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 bool isLine(int currentValue) {
 
@@ -157,7 +165,7 @@ bool isLine(int currentValue) {
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 void setMaxSpeedFromManualSensor() {
    maxSpeed = analogRead(POT);
@@ -165,28 +173,28 @@ void setMaxSpeedFromManualSensor() {
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 void turnLeft(int angle) {
 
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 void turnRight(int angle) {
   
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 double pwdFromDegree(double degree) {
    return 27.6527 + 0.5251 * degree;
 }
 
 /**
- * 
+ * ====================================================================================== 
  */
 double degreeFromPwm(double pwm) {
    return -46.831 + 1.856 * pwm;
