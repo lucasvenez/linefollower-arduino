@@ -1,4 +1,5 @@
 const int    SENSORS[5]       = {A1, A2, A3, A4, A5};
+const int    AUX_SENSORT      = 13;
 const int    LIMITS[5]        = {880, 880, 880, 880, 880};
 //const double SENSOR_ANGLES[4] = {5.357943, 6.795100, 6.795100, 6.675638};
 const double SENSOR_ANGLES[4] = {14.96989, 20.85526, 20.85526, 18.96187};
@@ -28,6 +29,8 @@ void setup() {
    for (int i = 0; i < 5; i++)
       pinMode(SENSORS[i], INPUT);
 
+   pinMode(AUX_SENSOR, INPUT);
+
    for (int i = 0; i < 2; i++)
       pinMode(MOTORS[i], OUTPUT);
 
@@ -47,7 +50,7 @@ void setup() {
      
       int currentValue = getCurrentRead();
      
-      if (currentValue > 1 && currentValue < 16)
+      if (currentValue > 1 && currentValue < 16 && readAuxSensor() == 1)
          count++;
       else
          count = 0;
@@ -96,7 +99,10 @@ void adjust(int currentValue) {
   
    if (currentValue > 0) {
       
-      if (currentValue == 4 || currentValue == 31 || currentValue == 14)
+      if (currentValue > 1 && currentValue < 13 && readAuxSensor() == 1)
+         defineSpeed(0, 0);
+     
+      else if (currentValue == 4 || currentValue == 31 || currentValue == 14)
          defineSpeed(maxSpeed, maxSpeed);
      
       else if (currentValue == 7)
@@ -225,3 +231,6 @@ double degreeFromPwm(double pwm) {
    return -46.831 + 1.856 * pwm;
 }
 
+int readAuxSensor() {
+   return 1 - digitalRead(AUX_SENSOR);
+}
