@@ -1,5 +1,5 @@
 const int    SENSORS[5]       = {A1, A2, A3, A4, A5};
-const int    AUX_SENSORT      = 13;
+const int    AUX_SENSOR       = 13;
 const int    LIMITS[5]        = {880, 880, 880, 880, 880};
 //const double SENSOR_ANGLES[4] = {5.357943, 6.795100, 6.795100, 6.675638};
 const double SENSOR_ANGLES[4] = {14.96989, 20.85526, 20.85526, 18.96187};
