@@ -59,6 +59,8 @@ void setup() {
    Serial.println(F("Ready... Go!"));
   
    defineSpeed(maxSpeed, maxSpeed);
+   
+   delay(1000);
 }  
 
 /*
@@ -99,7 +101,7 @@ void adjust(int currentValue) {
   
    if (currentValue > 0) {
       
-      if (currentValue > 1 && currentValue < 13 && readAuxSensor() == 1)
+      if (currentValue == 4 && readAuxSensor() == 1)
          defineSpeed(0, 0);
      
       else if (currentValue == 4 || currentValue == 31 || currentValue == 14)
