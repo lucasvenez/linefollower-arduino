@@ -109,11 +109,12 @@ void adjust(int currentValue, int ras) {
       if (currentValue == 4) {
         
          ready2stop++;
-        
-         if (currentValue == 31 || currentValue == 14)
-            defineSpeed(maxSpeed, maxSpeed);
+         defineSpeed(maxSpeed, maxSpeed);
          
-      } else {
+      } else if (currentValue == 31 || currentValue == 14)        
+        defineSpeed(maxSpeed, maxSpeed);
+        
+      else {
         
           ready2stop = 0;
         
@@ -136,8 +137,7 @@ void adjust(int currentValue, int ras) {
            * Desvio a esquerda
            */
           else if (currentValue < 29)
-             turnRight(currentValue);
-             
+             turnRight(currentValue);   
              
           lostCount = 0;  
           
@@ -158,10 +158,10 @@ void adjust(int currentValue, int ras) {
          lostCount = 0;
          
          if (lastValidValue > 0 && lastValidValue < 8 && lastValidValue != 4)
-            turnLeft(lastValidValue);         
+            turnLeft(lastValidValue);
 
          else if (lastValidValue > 4 && lastValidValue < 29)
-            turnRight(lastValidValue);                  
+            turnRight(lastValidValue);
        }
        else
          lostCount++;
