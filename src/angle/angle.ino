@@ -99,10 +99,11 @@ void defineSpeed(int velocityA, int velocityB) {
  */
 void adjust(int currentValue) {  
 
-   if (currentValue == 4 && readAuxSensor() == 1 && started)
+   if (currentValue == 4 && readAuxSensor() == 1 && started) {
+      delay(500);
       defineSpeed(0, 0);
   
-   else if (currentValue > 0) {
+   } else if (currentValue > 0) {
      
       started = true;
      
