@@ -1,6 +1,6 @@
 const int    SENSORS[5]       = {A1, A2, A3, A4, A5};
 const int    AUX_SENSOR       = 13;
-const int    LIMITS[5]        = {880, 880, 880, 880, 880};
+const int    LIMITS[5]        = {910, 910, 910, 910, 812};
 //const double SENSOR_ANGLES[4] = {5.357943, 6.795100, 6.795100, 6.675638};
 const double SENSOR_ANGLES[4] = {14.96989, 20.85526, 20.85526, 18.96187};
 
@@ -99,21 +99,21 @@ void defineSpeed(int velocityA, int velocityB) {
  */
 void adjust(int currentValue, int ras) {  
 
-   if (currentValue == 4 && ras == 1 && ready2stop > 500) {
-      delay(300);
-      defineSpeed(0, 0);
-      delay(20000);
-  
-   } else if (currentValue > 0) {
+   if (currentValue > 0) {
      
-      if (currentValue == 4) {
+      if (currentValue == 4 && read2stop <= 500) {
         
          defineSpeed(maxSpeed, maxSpeed);
          ready2stop++;
          
       } else if (currentValue == 31 || currentValue == 14)        
         defineSpeed(maxSpeed, maxSpeed);
-        
+      
+      } else if (currentValue == 4 && ras == 1 && ready2stop > 500) {
+         delay(300);
+         defineSpeed(0, 0);
+         delay(20000);
+      }         
       else {
         
           if (currentValue == 7)
