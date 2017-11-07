@@ -21,7 +21,7 @@ int lastValidValue = 0;
 int maxSpeed = 190;
 int lostCount = 0;
 
-int started = 0;
+int ready2stop = 0;
 
 /* 
  * ======================================================================================
@@ -99,42 +99,51 @@ void defineSpeed(int velocityA, int velocityB) {
  */
 void adjust(int currentValue, int ras) {  
 
-   if (currentValue == 4 && ras == 1 && started > 1000) {
-      delay(500);
+   if (currentValue == 4 && ras == 1 && ready2stop > 1000) {
+      delay(300);
       defineSpeed(0, 0);
       delay(20000);
   
    } else if (currentValue > 0) {
      
-      if (currentValue == 4 || currentValue == 31 || currentValue == 14) {
-         defineSpeed(maxSpeed, maxSpeed);
-         started++;
-      } else if (currentValue == 7)
-         turnLeft(currentValue);
+      if (currentValue == 4) {
+        
+         ready2stop++;
+        
+         if (currentValue == 31 || currentValue == 14)
+            defineSpeed(maxSpeed, maxSpeed);
          
-      /*
-       * Definindo mesma velocidade quando centralizado
-       */ 
-      else if (currentValue == 28)
-         turnRight(currentValue);
+      } else {
+        
+          ready2stop = 0;
+        
+          if (currentValue == 7)
+             turnLeft(currentValue);
+             
+          /*
+           * Definindo mesma velocidade quando centralizado
+           */ 
+          else if (currentValue == 28)
+             turnRight(currentValue);
+              
+          /*
+           * Desvio a esquerda
+           */
+          else if (currentValue < 8)
+             turnLeft(currentValue);
+                
+          /*
+           * Desvio a esquerda
+           */
+          else if (currentValue < 29)
+             turnRight(currentValue);
+             
+             
+          lostCount = 0;  
           
-      /*
-       * Desvio a esquerda
-       */
-      else if (currentValue < 8)
-         turnLeft(currentValue);
-            
-      /*
-       * Desvio a esquerda
-       */
-      else if (currentValue < 29)
-         turnRight(currentValue);
-         
-         
-      lostCount = 0;  
-      
-      if (currentValue != 4)
-          lastValidValue = currentValue;
+          if (currentValue != 4)
+              lastValidValue = currentValue;
+      }
    } 
    
    /*
@@ -142,11 +151,11 @@ void adjust(int currentValue, int ras) {
     */
    else {
 
+      ready2stop = 0;
+     
       if (lostCount > 4) {
 
          lostCount = 0;
-
-         started = 0;
          
          if (lastValidValue > 0 && lastValidValue < 8 && lastValidValue != 4)
             turnLeft(lastValidValue);         
