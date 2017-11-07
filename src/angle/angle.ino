@@ -21,7 +21,7 @@ int lastValidValue = 0;
 int maxSpeed = 190;
 int lostCount = 0;
 
-bool started = false;
+int started = 0;
 
 /* 
  * ======================================================================================
@@ -68,7 +68,7 @@ void setup() {
  */
 void loop() {   
 
-   adjust(getCurrentRead());
+   adjust(getCurrentRead(), readAuxSensor());
 }
  
 /**
@@ -97,20 +97,19 @@ void defineSpeed(int velocityA, int velocityB) {
 /**
  * ====================================================================================== 
  */
-void adjust(int currentValue) {  
+void adjust(int currentValue, int ras) {  
 
-   if (currentValue == 4 && readAuxSensor() == 1 && started) {
+   if (currentValue == 4 && ras == 1 && started > 1000) {
       delay(500);
       defineSpeed(0, 0);
+      delay(20000);
   
    } else if (currentValue > 0) {
      
-      started = true;
-     
-      if (currentValue == 4 || currentValue == 31 || currentValue == 14)
+      if (currentValue == 4 || currentValue == 31 || currentValue == 14) {
          defineSpeed(maxSpeed, maxSpeed);
-     
-      else if (currentValue == 7)
+         started++;
+      } else if (currentValue == 7)
          turnLeft(currentValue);
          
       /*
@@ -146,7 +145,9 @@ void adjust(int currentValue) {
       if (lostCount > 4) {
 
          lostCount = 0;
-        
+
+         started = 0;
+         
          if (lastValidValue > 0 && lastValidValue < 8 && lastValidValue != 4)
             turnLeft(lastValidValue);         
 
