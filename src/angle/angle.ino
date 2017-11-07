@@ -109,7 +109,7 @@ void adjust(int currentValue, int ras) {
       } else if (currentValue == 31 || currentValue == 14)        
         defineSpeed(maxSpeed, maxSpeed);
       
-      } else if (currentValue == 4 && ras == 1 && ready2stop > 500) {
+      else if (currentValue == 4 && ras == 1 && ready2stop > 500) {
          delay(300);
          defineSpeed(0, 0);
          delay(20000);
