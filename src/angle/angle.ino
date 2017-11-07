@@ -101,7 +101,7 @@ void adjust(int currentValue, int ras) {
 
    if (currentValue > 0) {
      
-      if (currentValue == 4 && read2stop <= 500) {
+      if (currentValue == 4 && ready2stop <= 500) {
         
          defineSpeed(maxSpeed, maxSpeed);
          ready2stop++;
