@@ -21,6 +21,8 @@ int lastValidValue = 0;
 int maxSpeed = 190;
 int lostCount = 0;
 
+bool started = false;
+
 /* 
  * ======================================================================================
  */
@@ -59,8 +61,6 @@ void setup() {
    Serial.println(F("Ready... Go!"));
   
    defineSpeed(maxSpeed, maxSpeed);
-   
-   delay(1000);
 }  
 
 /*
@@ -98,13 +98,15 @@ void defineSpeed(int velocityA, int velocityB) {
  * ====================================================================================== 
  */
 void adjust(int currentValue) {  
+
+   if (currentValue == 4 && readAuxSensor() == 1 && started)
+      defineSpeed(0, 0);
   
-   if (currentValue > 0) {
-      
-      if (currentValue == 4 && readAuxSensor() == 1)
-         defineSpeed(0, 0);
+   else if (currentValue > 0) {
      
-      else if (currentValue == 4 || currentValue == 31 || currentValue == 14)
+      started = true;
+     
+      if (currentValue == 4 || currentValue == 31 || currentValue == 14)
          defineSpeed(maxSpeed, maxSpeed);
      
       else if (currentValue == 7)
