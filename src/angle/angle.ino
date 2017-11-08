@@ -99,7 +99,7 @@ void defineSpeed(int velocityA, int velocityB) {
  */
 void adjust(int currentValue, int ras) {  
 
-   if (currentValue == 4 && ras == 1 && ready2stop > 1000) {
+   if (currentValue == 4 && ras == 1 && ready2stop > 500) {
       delay(300);
       defineSpeed(0, 0);
       delay(20000);
@@ -108,15 +108,13 @@ void adjust(int currentValue, int ras) {
      
       if (currentValue == 4) {
         
-         ready2stop++;
          defineSpeed(maxSpeed, maxSpeed);
+         ready2stop++;
          
       } else if (currentValue == 31 || currentValue == 14)        
         defineSpeed(maxSpeed, maxSpeed);
         
       else {
-        
-          ready2stop = 0;
         
           if (currentValue == 7)
              turnLeft(currentValue);
@@ -140,9 +138,10 @@ void adjust(int currentValue, int ras) {
              turnRight(currentValue);   
              
           lostCount = 0;  
+
+          ready2stop = 0;
           
-          if (currentValue != 4)
-              lastValidValue = currentValue;
+          lastValidValue = currentValue;
       }
    } 
    
@@ -192,13 +191,13 @@ void turnLeft(int currentValue) {
       leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[1])) / WIGHTS[0];
     
    else if (currentValue == 3)
-      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[0] / 4 + SENSOR_ANGLES[1])) / WIGHTS[1];
+      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[0] / 2 + SENSOR_ANGLES[1])) / WIGHTS[1];
 
    else if (currentValue == 7)
       leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - 180) / WIGHTS[1];
    
    else {
-      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[1] / 4)) / WIGHTS[0];       
+      leftPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[1] / 2)) / WIGHTS[0];       
    }
 
    defineSpeed(leftPwm, maxSpeed);
@@ -220,13 +219,13 @@ void turnRight(int currentValue) {
       rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[2])) / WIGHTS[0];
     
    else if (currentValue == 24)
-      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[3] / 4 + SENSOR_ANGLES[2])) / WIGHTS[1];
+      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[3] / 2 + SENSOR_ANGLES[2])) / WIGHTS[1];
    
    else if (currentValue == 28)
       rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - 180) / WIGHTS[1];
       
    else {
-      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[2] / 4)) / WIGHTS[0];       
+      rightPwm = (int)pwmFromDegree(degreeFromPwm(maxSpeed) - (SENSOR_ANGLES[2] / 2)) / WIGHTS[0];       
    }
 
    defineSpeed(maxSpeed, rightPwm);
